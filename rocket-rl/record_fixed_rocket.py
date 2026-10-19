@@ -1,0 +1,31 @@
+import gymnasium as gym
+from stable_baselines3 import PPO
+from gymnasium.wrappers import RecordVideo
+
+env = gym.make("LunarLander-v3", render_mode="rgb_array")
+env = RecordVideo(
+    env,
+    video_folder="videos/final",
+    episode_trigger=lambda episode: True,
+    name_prefix="corrected-rocket"
+)
+
+model = PPO.load("rocket_fixed_model")
+
+for episode in range(3):
+    observation, info = env.reset(seed=episode + 100)
+    done = False
+    total_reward = 0
+
+    while not done:
+        action, _ = model.predict(
+            observation, deterministic=True
+        )
+        observation, reward, terminated, truncated, info = env.step(action)
+        total_reward += reward
+        done = terminated or truncated
+
+    print(f"Episode {episode + 1}: reward = {total_reward:.2f}")
+
+env.close()
+print("Final recordings saved in videos/final/")
